@@ -5,6 +5,11 @@
 // TODO - perhaps intercept return key to be sure we get a para, and to be sure we insert newline within code sections, not new code tags + br or similar
 // TODO - Clean out more HTML cruft from programs like word/textedit
 
+// On document ready, scan for and activate toolbars associated with contenteditable
+DOM.Ready(function(){
+  // Activate editable content
+  Editable.Activate('.content-editable-toolbar');
+});
 
 var Editable = (function() {
 return {
@@ -15,13 +20,18 @@ return {
     }
   
     DOM.Each('.content-editable-toolbar',function(toolbar){
-        var editableId = '#'+ toolbar.getAttribute('data-editable') +'-editable';
-        var textareaId = '#'+ toolbar.getAttribute('data-editable') +'-textarea';
-        
         // Store associated elements for access later
-        toolbar.editable = DOM.First(editableId);
-        toolbar.textarea = DOM.First(textareaId);
         toolbar.buttons = toolbar.querySelectorAll('a');
+        var dataEditable = toolbar.getAttribute('data-editable');
+        toolbar.editable = DOM.First(DOM.Format("#{0}-editable",dataEditable));
+        toolbar.textarea = DOM.First(DOM.Format("#{0}-textarea",dataEditable));
+        
+        if (toolbar.editable === undefined) {
+          toolbar.editable = DOM.Nearest(toolbar,'.content-editable')[0];
+        }
+        if (toolbar.textarea === undefined) {
+          toolbar.textarea = DOM.Nearest(toolbar,'.content-textarea')[0];
+        }
         
         // Set textarea to hidden initially
         toolbar.textarea.style.display = 'none';
@@ -85,7 +95,7 @@ return {
   },// End activate
   
   // cleanAlign
-  cleanAlign:function(el) {
+  cleanAlign:function(cmd,el) {
     
     switch (cmd){
      case "justifyCenter": 

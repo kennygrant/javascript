@@ -1,6 +1,6 @@
 // Package DOM provides functions to replace the use of jquery in 1.4KB of js - Ajax, Selectors, Event binding, ShowHide
 // See http://youmightnotneedjquery.com/ for more if required
-// Version 1.0
+// Version 1.0.1
 var DOM = (function() {
 return {
   // Apply a function on document ready
@@ -17,41 +17,30 @@ return {
     return (document.querySelector(s) !== null);
   },
 
-  // Return an array of elements matching selector
+  // Return a NodeList of elements matching selector
   All:function(s) {
     return document.querySelectorAll(s);
   },
   
-  // Return the first in the array of elements matching selector - may return nil
-  First:function(s) {
-    return document.querySelectorAll(s)[0];
+  // Return a NodeList of nearest elements matching selector, as children, siblings or parents of selector
+  Nearest:function(el,s) {
+    
+    // Start with this element, then walk up the tree till we find a child which matches selector
+    // Or we run out of elements
+    while (el !== undefined) {
+      var nearest = el.querySelectorAll(s);
+      if (nearest.length > 0) {
+        return nearest;
+      }
+      el = el.parentNode;
+    }
+    
+    return undefined;
   },
   
-  // Return an array of nearest elements matching selector, as children, siblings or parents of selector
-  Nearest:function(el,s) {
-    // Find children
-    var nearest = el.querySelectorAll(s);
-    if (nearest.length > 0) {
-      return nearest;
-    }
-    
-    // Find siblings
-    nearest = Array.prototype.filter.call(el.parentNode.children, function(child){
-      return child !== el;
-    });
-    if (nearest.length > 0) {
-      return nearest;
-    }
-    
-    // Find elements two parents up
-    if (el.parentNode.parentNode !== undefined) {
-      nearest = Array.prototype.filter.call(el.parentNode.parentNode.children, function(child){
-        return child !== el;
-      });
-    }
-  
-    // Give up and return any matches
-    return document.querySelectorAll(s);
+  // Return the first in the NodeList of elements matching selector - may return undefined
+  First:function(s) {
+    return DOM.All(s)[0];
   },
   
   // Apply a function to elements matching selector
@@ -62,7 +51,7 @@ return {
     }
   },
   
-  // Apply a function to elements matching selector
+  // Apply a function to elements of an array
   ForEach:function(a,f) {
     Array.prototype.forEach.call(a,f);
   },
@@ -82,6 +71,7 @@ return {
     });
   },
   
+  // Toggle the Shown or Hidden value of elements matching selector
   ShowHide:function(s) {
     DOM.Each(s,function(el,i){
       if (el.style.display != 'none') {
@@ -97,6 +87,17 @@ return {
     DOM.Each(s,function(el,i){
       el.addEventListener(b, f);
     });
+  },
+  
+  // Format returns the format string with the indexed arguments substituted
+  // Formats are of the form - "{0} {1}" which uses variables 0 and 1 respectively
+  // TODO: We could at a later date perhaps accept named arguments?
+  Format:function(f) {
+    for (var i = 1; i < arguments.length; i++) {
+      var regexp = new RegExp('\\{'+(i-1)+'\\}', 'gi');
+      f = f.replace(regexp, arguments[i]);
+    }
+    return f;
   },
   
   // Ajax - Send the data d to url u
